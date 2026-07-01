@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Para amecita 🌙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --deep:  #0a0a0f;
+      --mid:   #0d1b2a;
+      --rose:  #e8a0bf;
+      --gold:  #f0d080;
+      --white: #f5f0ff;
+      --dim:   rgba(245,240,255,0.55);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Lato', sans-serif; background: var(--deep); color: var(--white); overflow-x: hidden; }
+    #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* ── LOCK ── */
+    #lock-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #0d1b2a 0%, #0a0a0f 100%);
+      gap: 2rem;
+    }
+    #lock-screen h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 6vw, 3.5rem); color: var(--rose); text-align: center; letter-spacing: 0.05em; animation: fadeUp 1s ease both; }
+    #lock-screen p { color: var(--dim); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; animation: fadeUp 1s 0.2s ease both; }
+    .lock-input-wrap { display: flex; gap: 0.75rem; animation: fadeUp 1s 0.4s ease both; }
+    .lock-input-wrap input { background: transparent; border: 1px solid var(--rose); border-radius: 6px; color: var(--white); font-family: 'Lato', sans-serif; font-size: 1.1rem; letter-spacing: 0.15em; padding: 0.6rem 1.2rem; outline: none; width: 220px; transition: box-shadow 0.3s; }
+    .lock-input-wrap input::placeholder { color: rgba(232,160,191,0.4); }
+    .lock-input-wrap input:focus { box-shadow: 0 0 18px rgba(232,160,191,0.35); }
+    .lock-input-wrap button { background: var(--rose); border: none; border-radius: 6px; color: var(--deep); cursor: pointer; font-family: 'Lato', sans-serif; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.08em; padding: 0.6rem 1.4rem; transition: background 0.3s, transform 0.2s, box-shadow 0.2s; }
+    .lock-input-wrap button:hover { background: var(--gold); transform: scale(1.06); box-shadow: 0 0 18px rgba(240,208,128,0.4); }
+    #lock-error { color: #ff8fa3; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; letter-spacing: 0.06em; }
+    #lock-error.show { opacity: 1; }
+
+    /* ── MAIN ── */
+    #main-content { display: none; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ── HERO ── */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; gap: 1.5rem; }
+    #hero .eyebrow { font-size: 0.8rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rose); opacity: 0.8; }
+    #hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.8rem, 8vw, 5.5rem); line-height: 1.1; color: var(--white); }
+    #hero h1 em { font-style: italic; color: var(--rose); }
+    #hero .subtitle { color: var(--dim); font-size: 1.05rem; max-width: 480px; line-height: 1.7; }
+    .scroll-hint { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--dim); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; animation: bounce 2s infinite; }
+    .scroll-hint svg { opacity: 0.5; }
+
+    /* ── CONTADOR ── */
+    #contador {
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    #contador h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 3.5vw, 2rem); color: var(--gold); margin-bottom: 2rem; }
+    .contador-grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
+    .contador-item {
+      background: rgba(13,27,42,0.7);
+      border: 1px solid rgba(232,160,191,0.2);
+      border-radius: 14px;
+      padding: 1.2rem 1.8rem;
+      min-width: 90px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .contador-item:hover { border-color: rgba(232,160,191,0.5); transform: translateY(-3px); }
+    .contador-num { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--rose); display: block; line-height: 1; }
+    .contador-label { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin-top: 0.4rem; display: block; }
+
+    /* ── FILM STRIP ── */
+    #film-strip { padding: 5rem 0; overflow: hidden; }
+    #film-strip h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); text-align: center; color: var(--gold); margin-bottom: 2.5rem; padding: 0 2rem; }
+    .film-reel { background: #111; border-top: 12px solid #1a1a1a; border-bottom: 12px solid #1a1a1a; padding: 1.5rem 0; position: relative; }
+    .film-reel::before, .film-reel::after { content: ''; position: absolute; left: 0; right: 0; height: 12px; background: repeating-linear-gradient(90deg, transparent 0, transparent 18px, #0a0a0f 18px, #0a0a0f 36px); }
+    .film-reel::before { top: -12px; }
+    .film-reel::after  { bottom: -12px; }
+    .film-track { display: flex; gap: 1.2rem; animation: filmScroll 28s linear infinite; width: max-content; padding: 0 1.2rem; }
+    .film-track:hover { animation-play-state: paused; }
+    .film-frame { width: 220px; height: 160px; border: 3px solid #2a2a2a; border-radius: 3px; overflow: hidden; flex-shrink: 0; background: #1c1c2e; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: rgba(255,255,255,0.25); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s; position: relative; }
+    .film-frame:hover { border-color: var(--rose); transform: scale(1.06); box-shadow: 0 0 20px rgba(232,160,191,0.2); }
+    .film-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .film-frame .frame-number { position: absolute; bottom: 4px; right: 6px; font-size: 0.65rem; color: rgba(255,255,255,0.3); font-family: 'Courier New', monospace; }
+
+    /* ── TIMELINE ── */
+    #timeline { padding: 6rem 2rem; max-width: 760px; margin: 0 auto; }
+    #timeline h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); color: var(--gold); margin-bottom: 3.5rem; text-align: center; }
+    .tl-item { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; margin-bottom: 3rem; align-items: start; }
+    .tl-item:nth-child(even) .tl-text  { grid-column: 3; }
+    .tl-item:nth-child(even) .tl-dot   { grid-column: 2; }
+    .tl-item:nth-child(even) .tl-empty { grid-column: 1; }
+    .tl-item:nth-child(odd) .tl-text   { grid-column: 1; text-align: right; }
+    .tl-item:nth-child(odd) .tl-dot    { grid-column: 2; }
+    .tl-item:nth-child(odd) .tl-empty  { grid-column: 3; }
+    .tl-dot { display: flex; flex-direction: column; align-items: center; padding-top: 0.2rem; }
+    .tl-dot-circle { width: 14px; height: 14px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 12px var(--rose); flex-shrink: 0; transition: transform 0.3s, box-shadow 0.3s; }
+    .tl-item:hover .tl-dot-circle { transform: scale(1.4); box-shadow: 0 0 20px var(--rose); }
+    .tl-dot-line { width: 1px; background: rgba(232,160,191,0.2); flex-grow: 1; min-height: 60px; }
+    .tl-text { padding: 0 1rem; }
+    .tl-date { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--rose); margin-bottom: 0.4rem; }
+    .tl-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--white); margin-bottom: 0.4rem; }
+    .tl-desc { font-size: 0.88rem; color: var(--dim); line-height: 1.6; }
+
+    /* ── MENSAJES OCULTOS ── */
+    #hidden-messages { padding: 5rem 2rem; text-align: center; }
+    #hidden-messages h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); color: var(--gold); margin-bottom: 0.8rem; }
+    #hidden-messages .section-hint { color: var(--dim); font-size: 0.9rem; margin-bottom: 3rem; letter-spacing: 0.05em; }
+    .emoji-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; max-width: 600px; margin: 0 auto; }
+    .emoji-btn { font-size: 2.8rem; cursor: pointer; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s; user-select: none; }
+    .emoji-btn:hover { transform: scale(1.35) rotate(-6deg); filter: drop-shadow(0 0 16px var(--rose)); }
+    .emoji-btn:active { transform: scale(0.9); }
+
+    /* ── POPUP ── */
+    .msg-popup { position: fixed; inset: 0; z-index: 8000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+    .msg-popup.open { opacity: 1; pointer-events: auto; }
+    .msg-card { background: linear-gradient(135deg, #0d1b2a, #1a0a1e); border: 1px solid rgba(232,160,191,0.3); border-radius: 20px; padding: 2.5rem; max-width: 420px; width: 90%; text-align: center; transform: scale(0.8) translateY(20px); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .msg-popup.open .msg-card { transform: scale(1) translateY(0); }
+    .msg-card .msg-emoji { font-size: 3rem; display: block; margin-bottom: 1rem; }
+    .msg-card p { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.1rem; color: var(--white); line-height: 1.7; margin-bottom: 1.5rem; }
+    .msg-close { background: transparent; border: 1px solid rgba(232,160,191,0.4); color: var(--rose); border-radius: 6px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 0.8rem; letter-spacing: 0.12em; padding: 0.45rem 1.2rem; transition: background 0.3s, transform 0.2s; }
+    .msg-close:hover { background: rgba(232,160,191,0.12); transform: scale(1.05); }
+
+    /* ── CARTA FINAL (reemplaza game-end-msg) ── */
+    #carta-final {
+      display: none;
+      margin: 2.5rem auto 0;
+      max-width: 480px;
+      background: linear-gradient(135deg, #0d1b2a, #1a0a1e);
+      border: 1px solid rgba(232,160,191,0.3);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(232,160,191,0.1);
+      animation: cartaAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes cartaAppear { from { opacity:0; transform: scale(0.85) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
+    #carta-final .carta-emoji { font-size: 2.5rem; display: block; margin-bottom: 1rem; }
+    #carta-final h3 { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.5rem; color: var(--rose); margin-bottom: 1.2rem; line-height: 1.4; }
+    #carta-final p { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: var(--dim); line-height: 1.8; margin-bottom: 0.8rem; }
+    #carta-final .carta-firma { font-size: 0.85rem; color: var(--rose); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 1.2rem; }
+
+    /* ── POLAROID ── */
+    #photo-posts { padding: 5rem 2rem; }
+    #photo-posts h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); color: var(--gold); text-align: center; margin-bottom: 2.5rem; }
+    .polaroid-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; max-width: 900px; margin: 0 auto; }
+    .polaroid { background: #f5f0ff; padding: 0.8rem 0.8rem 3rem; border-radius: 2px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); transform: rotate(var(--rot, -2deg)); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s; width: 210px; cursor: pointer; }
+    .polaroid:hover { transform: rotate(0deg) scale(1.08); box-shadow: 0 20px 60px rgba(232,160,191,0.3); z-index: 10; }
+    .polaroid-img { width: 100%; height: 175px; object-fit: cover; display: block; background: #1c1c2e; }
+    .polaroid-placeholder { width: 100%; height: 175px; background: linear-gradient(135deg, #1c1c2e, #0d1b2a); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: rgba(232,160,191,0.4); letter-spacing: 0.08em; text-transform: uppercase; }
+    .polaroid-caption { color: #0a0a0f; font-size: 0.78rem; text-align: center; margin-top: 0.8rem; font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
+
+    /* ── ADMIRO ── */
+    #admiro { padding: 5rem 2rem; max-width: 800px; margin: 0 auto; }
+    #admiro h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); color: var(--gold); margin-bottom: 2.5rem; text-align: center; }
+    .admiro-list { display: grid; gap: 1.2rem; }
+    .admiro-item { background: rgba(13,27,42,0.6); border: 1px solid rgba(232,160,191,0.12); border-radius: 10px; padding: 1.2rem 1.5rem; display: flex; gap: 1rem; align-items: flex-start; transition: border-color 0.3s, background 0.3s, transform 0.3s; }
+    .admiro-item:hover { border-color: rgba(232,160,191,0.45); background: rgba(13,27,42,0.95); transform: translateX(6px); }
+    .admiro-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .admiro-text h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--rose); margin-bottom: 0.3rem; }
+    .admiro-text p { font-size: 0.88rem; color: var(--dim); line-height: 1.6; }
+
+    /* ── ESTRELLAS ── */
+    #stars-section { padding: 5rem 2rem; text-align: center; }
+    #stars-section h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); color: var(--gold); margin-bottom: 0.8rem; }
+    #stars-section .section-hint { color: var(--dim); font-size: 0.9rem; margin-bottom: 3rem; }
+    .stars-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; max-width: 600px; margin: 0 auto; }
+    .star-btn { font-size: 2.5rem; cursor: pointer; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s; user-select: none; }
+    .star-btn:not(.unlocked) { filter: grayscale(1) opacity(0.4); }
+    .star-btn.unlocked { filter: drop-shadow(0 0 14px var(--gold)); animation: starPulse 2s ease infinite; }
+    .star-btn:hover { transform: scale(1.35); }
+
+    /* ── EASTER EGG ── */
+    #easter-egg-btn {
+      display: none;
+      margin: 2rem auto 0;
+      background: transparent;
+      border: 1px solid rgba(240,208,128,0.4);
+      color: var(--gold);
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Lato', sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      padding: 0.55rem 1.5rem;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      animation: fadeUp 0.6s ease both;
+    }
+    #easter-egg-btn:hover { background: rgba(240,208,128,0.1); transform: scale(1.05); box-shadow: 0 0 20px rgba(240,208,128,0.2); }
+
+    /* ── MINI JUEGO ── */
+    #minigame { padding: 5rem 2rem; text-align: center; }
+    #minigame h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem, 4vw, 2.5rem); color: var(--gold); margin-bottom: 0.8rem; }
+    #minigame .section-hint { color: var(--dim); font-size: 0.9rem; margin-bottom: 2.5rem; }
+    #game-canvas-wrap { position: relative; width: 380px; height: 300px; margin: 0 auto; background: linear-gradient(180deg, #0a0a1f 0%, #0d1b2a 100%); border: 1px solid rgba(232,160,191,0.2); border-radius: 12px; overflow: hidden; cursor: none; }
+    #game-canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+    #game-start-btn { margin-top: 1.5rem; background: var(--rose); border: none; border-radius: 8px; color: var(--deep); cursor: pointer; font-family: 'Lato', sans-serif; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.08em; padding: 0.7rem 2rem; transition: background 0.3s, transform 0.2s, box-shadow 0.2s; }
+    #game-start-btn:hover { background: var(--gold); transform: scale(1.06); box-shadow: 0 0 20px rgba(240,208,128,0.3); }
+    #game-score { margin-top: 1rem; font-size: 0.9rem; color: var(--dim); letter-spacing: 0.1em; }
+
+    /* ── CIERRE EMOCIONAL ── */
+    #cierre {
+      padding: 6rem 2rem;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    #cierre .cierre-linea { width: 1px; height: 60px; background: linear-gradient(to bottom, transparent, rgba(232,160,191,0.5), transparent); margin: 0 auto 3rem; }
+    #cierre h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 4vw, 2.2rem); color: var(--white); line-height: 1.5; margin-bottom: 1.5rem; }
+    #cierre h2 em { color: var(--rose); font-style: italic; }
+    #cierre p { font-family: 'Playfair Display', serif; font-style: italic; color: var(--dim); font-size: 1rem; line-height: 1.9; margin-bottom: 1rem; }
+    #cierre .cierre-firma { font-size: 0.8rem; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(232,160,191,0.5); margin-top: 2rem; }
+
+    /* ── FOOTER ── */
+    footer { padding: 3rem 2rem; text-align: center; border-top: 1px solid rgba(232,160,191,0.1); }
+    footer .heart { font-size: 2rem; display: block; margin-bottom: 0.8rem; animation: heartbeat 1.8s ease infinite; }
+    footer p { font-family: 'Playfair Display', serif; font-style: italic; color: var(--dim); font-size: 0.95rem; }
+
+    /* ── MÚSICA ── */
+    #music-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 500; background: rgba(13,27,42,0.9); border: 1px solid rgba(232,160,191,0.3); border-radius: 50%; width: 48px; height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transition: background 0.3s, box-shadow 0.3s, transform 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    #music-btn:hover { background: rgba(232,160,191,0.15); box-shadow: 0 0 24px rgba(232,160,191,0.25); transform: scale(1.1); }
+
+    /* ── KEYFRAMES ── */
+    @keyframes fadeUp     { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes filmScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes bounce     { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+    @keyframes heartbeat  { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.3); } 28% { transform: scale(1); } 42% { transform: scale(1.2); } 70% { transform: scale(1); } }
+    @keyframes starPulse  { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .tl-item { grid-template-columns: 24px 1fr; }
+      .tl-item .tl-empty { display: none; }
+      .tl-item:nth-child(odd) .tl-text, .tl-item:nth-child(even) .tl-text { grid-column: 2; text-align: left; }
+      .tl-item:nth-child(odd) .tl-dot,  .tl-item:nth-child(even) .tl-dot  { grid-column: 1; }
+      #game-canvas-wrap { width: 100%; height: 250px; }
+      .polaroid { width: 155px; }
+      .polaroid-img { height: 125px; }
+      .film-track { animation-duration: 36s; }
+      .film-frame { width: 180px; height: 130px; }
+      .contador-num { font-size: 1.7rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .film-track { animation: none; }
+      .scroll-hint { animation: none; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<!-- LOCK -->
+<div id="lock-screen">
+  <h1>Para ti 🌙</h1>
+  <p>Ingresa la contraseña para ingresar, la pista es, el nombre de mi novia.</p>
+  <div class="lock-input-wrap">
+    <input type="password" id="pass-input" placeholder="contraseña..." autocomplete="off" />
+    <button onclick="checkPass()">Entrar</button>
+  </div>
+  <span id="lock-error">Eso no es correcto, inténtalo de nuevo 🌸</span>
+</div>
+
+<!-- MAIN -->
+<div id="main-content">
+
+  <section id="hero" class="reveal">
+    <span class="eyebrow">hecho con todo el corazón</span>
+    <h1>Tú y yo,<br/><em>en cada momento</em></h1>
+    <p class="subtitle">Este espacio existe porque hay cosas que solo se entienden cuando las ves escritas.</p>
+    <div class="scroll-hint">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+      sigue bajando
+    </div>
+  </section>
+
+  <!-- CONTADOR DE TIEMPO JUNTOS -->
+  <section id="contador" class="reveal">
+    <h2>Llevamos juntos 💑</h2>
+    <div class="contador-grid">
+      <div class="contador-item"><span class="contador-num" id="cnt-dias">0</span><span class="contador-label">días</span></div>
+      <div class="contador-item"><span class="contador-num" id="cnt-horas">0</span><span class="contador-label">horas</span></div>
+      <div class="contador-item"><span class="contador-num" id="cnt-minutos">0</span><span class="contador-label">minutos</span></div>
+      <div class="contador-item"><span class="contador-num" id="cnt-segundos">0</span><span class="contador-label">segundos</span></div>
+    </div>
+  </section>
+
+  <section id="film-strip" class="reveal">
+    <h2>fotos que guardo con Amor 🎞️</h2>
+    <div class="film-reel">
+      <div class="film-track" id="film-track">
+        <div class="film-frame"><img src="amex.jpg" alt="foto"/><span class="frame-number">001</span></div>
+        <div class="film-frame"><img src="manos.jpeg" alt="foto"/><span class="frame-number">002</span></div>
+        <div class="film-frame"><img src="bos.jpg" alt="foto"/><span class="frame-number">003</span></div>
+        <div class="film-frame"><img src="dormidos.jpeg" alt="foto"/><span class="frame-number">004</span></div>
+        <div class="film-frame"><img src="alberca.jpeg" alt="foto"/><span class="frame-number">005</span></div>
+        <div class="film-frame"><img src="amecita.jpeg" alt="foto"/><span class="frame-number">006</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="timeline" class="reveal">
+    <h2>Nuestra relación tiene una historia de mi lado :D</h2>
+    <div class="tl-item reveal reveal-delay-1">
+      <div class="tl-text">
+        <div class="tl-date">??/??/2025</div>
+        <div class="tl-title">El comienzo</div>
+        <div class="tl-desc">Sin darme cuenta, en algún momento del 2025, comencé a notar algo distinto por Amellaly, una niña llamativa, con vibras distintas a quien sea que la vea. Únicamente sabían Carlos y Larissa, el bien y mal de mi conciencia.</div>
+      </div>
+      <div class="tl-dot"><div class="tl-dot-circle"></div><div class="tl-dot-line"></div></div>
+      <div class="tl-empty"></div>
+    </div>
+    <div class="tl-item reveal reveal-delay-2">
+      <div class="tl-empty"></div>
+      <div class="tl-dot"><div class="tl-dot-circle"></div><div class="tl-dot-line"></div></div>
+      <div class="tl-text">
+        <div class="tl-date">11/02/2026</div>
+        <div class="tl-title">"Me gusta"</div>
+        <div class="tl-desc">tanto tiempo disfrutando de la soledad, cada instante más cerca de algo que no entendía hasta el tiempo en que hablé con Aislyn, su mejor amiga, aceptando después de mucha insistencia que sí, Ame me gustaba.</div>
+      </div>
+    </div>
+    <div class="tl-item reveal reveal-delay-1">
+      <div class="tl-text">
+        <div class="tl-date">12/02/2026 a 7/06/2026</div>
+        <div class="tl-title">proceso</div>
+        <div class="tl-desc">desde la primer fecha hasta la última mencionada, trataba de enamorarla, con altos y bajos, con topes y atajos, pero siempre con fé de que en alguna ocasión, me notase.</div>
+      </div>
+      <div class="tl-dot"><div class="tl-dot-circle"></div><div class="tl-dot-line"></div></div>
+      <div class="tl-empty"></div>
+    </div>
+    <div class="tl-item reveal reveal-delay-2">
+      <div class="tl-empty"></div>
+      <div class="tl-dot"><div class="tl-dot-circle"></div><div class="tl-dot-line"></div></div>
+      <div class="tl-text">
+        <div class="tl-date">8/06/2026</div>
+        <div class="tl-title">EL DÍA</div>
+        <div class="tl-desc">ESE DÍA por fin llegó, con una página web y un pay de queso le pedí entrar en una relación, yo nervioso y ella sorprendida, aceptó...</div>
+      </div>
+    </div>
+    <div class="tl-item reveal reveal-delay-3">
+      <div class="tl-text">
+        <div class="tl-date">Hoy</div>
+        <div class="tl-title">Mesuario</div>
+        <div class="tl-desc">A día de hoy sigo escribiendo códigos, pidiendo ayuda extra para ello, y amándola, siempre amando cada parte de su existir, ahora ambos cumpliendo nuestro primer mes de noviazgo.</div>
+      </div>
+      <div class="tl-dot"><div class="tl-dot-circle"></div></div>
+      <div class="tl-empty"></div>
+    </div>
+  </section>
+
+  <section id="hidden-messages" class="reveal">
+    <h2>🐱</h2>
+    <p class="section-hint">Toca cada emoji para descubrir un mensaje</p>
+    <div class="emoji-grid">
+      <span class="emoji-btn" data-emoji="🐱" data-msg="me recuerdas a los gatos cuando busco tu cariño y lo recibo de formas distintas." onclick="openMsg(this)">🐱</span>
+      <span class="emoji-btn" data-emoji="🌙" data-msg="le pido a la luna que te cuide, que te diga cuánto te amo, más de lo que imaginas." onclick="openMsg(this)">🌙</span>
+      <span class="emoji-btn" data-emoji="🌸" data-msg="me recuerdas a una flor de amapola, que me encandila y atrae, que me envicia y en el desquicio te quiero más." onclick="openMsg(this)">🌸</span>
+      <span class="emoji-btn" data-emoji="☕" data-msg="necesito café, para mantenerme despierto y seguir dando todo de mí por hacerte feliz." onclick="openMsg(this)">☕</span>
+      <span class="emoji-btn" data-emoji="🎵" data-msg="cada canción de amor va para nosotros, cada nota musical, cada verso y coro." onclick="openMsg(this)">🎵</span>
+    </div>
+  </section>
+
+  <section id="photo-posts" class="reveal">
+    <h2>fotos de mi linda novia</h2>
+    <div class="polaroid-grid">
+      <div class="polaroid" style="--rot: -3deg">
+        <img class="polaroid-img" src="lindota.jpg" alt="foto">
+        <p class="polaroid-caption">los baños cada fin de año hacen maravillas (ntc amor, te amo)</p>
+      </div>
+      <div class="polaroid" style="--rot: 2deg">
+        <img class="polaroid-img" src="preciosa.jpeg" alt="foto">
+        <p class="polaroid-caption">el nombre de la imagen dice lo que es, preciosa.</p>
+      </div>
+      <div class="polaroid" style="--rot: -1.5deg">
+        <img class="polaroid-img" src="primera.jpg" alt="foto">
+        <p class="polaroid-caption">los planetas se alinean solo para verla.</p>
+      </div>
+      <div class="polaroid" style="--rot: 3deg">
+        <img class="polaroid-img" src="azul.jpg" alt="foto">
+        <p class="polaroid-caption">las estrellas envidian la constelación de sus lunares.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="admiro" class="reveal">
+    <h2>Lo que admiro de Ame</h2>
+    <div class="admiro-list">
+      <div class="admiro-item reveal reveal-delay-1">
+        <span class="admiro-icon">✨</span>
+        <div class="admiro-text"><h3>ESTILO</h3><p>Tiene muy buen estilo.</p></div>
+      </div>
+      <div class="admiro-item reveal reveal-delay-2">
+        <span class="admiro-icon">🌿</span>
+        <div class="admiro-text"><h3>NATURALIDAD</h3><p>Habla natural, el único filtro es el del agua cuando se baña (cada inicio de semestre).</p></div>
+      </div>
+      <div class="admiro-item reveal reveal-delay-3">
+        <span class="admiro-icon">💫</span>
+        <div class="admiro-text"><h3>PACIENCIA</h3><p>Es muy paciente (aguanta mis estupideces, como la anterior JAJAJA).</p></div>
+      </div>
+      <div class="admiro-item reveal reveal-delay-1">
+        <span class="admiro-icon">🎨</span>
+        <div class="admiro-text"><h3>DIBUJOS</h3><p>Dibuja increíble, humilla a mis vaquitas con el cuerno chueco.</p></div>
+      </div>
+      <div class="admiro-item reveal reveal-delay-2">
+        <span class="admiro-icon">🌙</span>
+        <div class="admiro-text"><h3>BRILLO</h3><p>Tiene un modo de brillar que la luna le trae odio.</p></div>
+      </div>
+      <div class="admiro-item reveal reveal-delay-3">
+        <span class="admiro-icon">❤️</span>
+        <div class="admiro-text"><h3>...</h3><p>Hay tantas cosas, pero no le agarro la onda a esto, así que solo podré 5. Ame, te amo un montón.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="stars-section" class="reveal">
+    <h2>Mensajes de las estrellas para Ame ⭐</h2>
+    <p class="section-hint">Toca cada estrella para desbloquear un mensaje</p>
+    <div class="stars-grid">
+      <span class="star-btn" data-star-msg="Brillas tan linda que, al brillar tú, terminamos brillando juntos." onclick="unlockStar(this)">⭐</span>
+      <span class="star-btn" data-star-msg="no necesito estrellas si tengo tus ojos, que iluminan mi corazón." onclick="unlockStar(this)">⭐</span>
+      <span class="star-btn" data-star-msg="me dejas sin palabras, PRECIOSAAAAA." onclick="unlockStar(this)">⭐</span>
+      <span class="star-btn" data-star-msg="en este universo te elijo a ti para acompañarte, cuidarte y quererte." onclick="unlockStar(this)">⭐</span>
+      <span class="star-btn" data-star-msg="la próxima ni siquiera la pude formular por tu belleza." onclick="unlockStar(this)">⭐</span>
+      <span class="star-btn" data-star-msg="EDJDFOFOEGKMEOFBTKJRÑTIJOFBGJFIEUTGE." onclick="unlockStar(this)">⭐</span>
+    </div>
+    <!-- Easter egg: aparece al desbloquear todas las estrellas -->
+    <button id="easter-egg-btn" onclick="openEasterEgg()">✨ encontraste algo oculto...</button>
+  </section>
+
+  <section id="minigame" class="reveal">
+    <h2>Un pequeño viaje 🎮</h2>
+    <p class="section-hint">Mueve el ratón (o toca) para guiar la estrella y recolectar los corazones</p>
+    <div id="game-canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+    </div>
+    <button id="game-start-btn" onclick="startGame()">Comenzar ✨</button>
+    <p id="game-score">Corazones: <span id="heart-count">0</span> / 8</p>
+
+    <!-- CARTA FINAL — reemplaza el mensaje simple anterior -->
+    <div id="carta-final">
+      <span class="carta-emoji">💌</span>
+      <h3>Si llegaste hasta aquí...</h3>
+      <p>significa que recorriste cada pequeño pedazo de lo que siento por ti.</p>
+      <p>cada corazón que recolectaste es un hit más al mío, simulan ser el momento alegre que me llega al alma y termina formando parte de mí.</p>
+      <p>Todo esto existe porque <em style="color:var(--rose)">tú</em> existes en mi vida.</p>
+      <p class="carta-firma">con todo mi amor — Alex 🌙</p>
+    </div>
+  </section>
+
+  <!-- CIERRE EMOCIONAL -->
+  <section id="cierre" class="reveal">
+    <div class="cierre-linea"></div>
+    <h2>Aunque esta página tenga un final...<br/><em>lo nuestro sigue escribiéndose</em></h2>
+    <p>cada día que pasa es una línea nueva en nuestra historia.</p>
+    <p>gracias por existir en mi vida, Ame.</p>
+    <p>gracias por ser tú.</p>
+    <p class="cierre-firma">feliz primer mes, corazón 💖</p>
+  </section>
+
+  <footer class="reveal">
+    <span class="heart">💖</span>
+    <p>Hecho con amor, para Ame.</p>
+  </footer>
+
+</div><!-- /main-content -->
+
+<!-- POPUP fuera de main-content -->
+<div class="msg-popup" id="msg-popup" onclick="if(event.target===this)closePopup()">
+  <div class="msg-card">
+    <span class="msg-emoji" id="msg-emoji"></span>
+    <p id="msg-text"></p>
+    <button class="msg-close" onclick="closePopup()">cerrar ✕</button>
+  </div>
+</div>
+
+<button id="music-btn" onclick="toggleMusic()" title="▶ Reproducir música">🎵</button>
+
+<audio id="bg-music" loop>
+  <source src="DWAS.mp3" type="audio/mpeg"/>
+</audio>
+
+<script>
+// ══════════════════════════════════════
+// CONTRASEÑA
+// ══════════════════════════════════════
+var PASSWORD = "AME";
+
+function checkPass() {
+  var val = document.getElementById("pass-input").value;
+  if (val.toLowerCase() === PASSWORD.toLowerCase()) {
+    var lock = document.getElementById("lock-screen");
+    lock.style.transition = "opacity 0.8s";
+    lock.style.opacity = "0";
+    setTimeout(function() {
+      lock.style.display = "none";
+      var main = document.getElementById("main-content");
+      main.style.display = "block";
+      initStars();
+      initScrollReveal();
+      initContador();
+      // Fade in de música
+      var audio = document.getElementById("bg-music");
+      audio.volume = 0;
+      audio.play().catch(function(){});
+      fadeInAudio(audio, 0, 1, 2000);
+      musicPlaying = true;
+      document.getElementById("music-btn").textContent = "🔇";
+    }, 800);
+  } else {
+    var err = document.getElementById("lock-error");
+    err.classList.add("show");
+    var input = document.getElementById("pass-input");
+    input.style.borderColor = "#ff8fa3";
+    setTimeout(function() {
+      err.classList.remove("show");
+      input.style.borderColor = "var(--rose)";
+    }, 2500);
+  }
+}
+
+document.getElementById("pass-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") checkPass();
+});
+
+// ══════════════════════════════════════
+// FADE IN/OUT DE AUDIO
+// ══════════════════════════════════════
+function fadeInAudio(audio, from, to, duration) {
+  audio.volume = from;
+  var steps = 40;
+  var stepTime = duration / steps;
+  var stepVol  = (to - from) / steps;
+  var i = 0;
+  var timer = setInterval(function() {
+    i++;
+    audio.volume = Math.min(Math.max(from + stepVol * i, 0), 1);
+    if (i >= steps) clearInterval(timer);
+  }, stepTime);
+}
+
+function fadeOutAudio(audio, duration, callback) {
+  var from = audio.volume;
+  var steps = 30;
+  var stepTime = duration / steps;
+  var i = 0;
+  var timer = setInterval(function() {
+    i++;
+    audio.volume = Math.max(from - (from / steps) * i, 0);
+    if (i >= steps) {
+      clearInterval(timer);
+      audio.pause();
+      if (callback) callback();
+    }
+  }, stepTime);
+}
+
+// ══════════════════════════════════════
+// STARFIELD — lock screen
+// ══════════════════════════════════════
+(function initLockStars() {
+  var canvas = document.getElementById("starfield");
+  var ctx = canvas.getContext("2d");
+  var W = canvas.width  = window.innerWidth;
+  var H = canvas.height = window.innerHeight;
+  var stars = [];
+  for (var i = 0; i < 160; i++) {
+    stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.2+0.2, alpha: Math.random()*0.5+0.1, speed: Math.random()*0.1+0.03 });
+  }
+  window.addEventListener("resize", function() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+  function tick() {
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(function(s) {
+      s.y -= s.speed;
+      if (s.y < 0) { s.y = H; s.x = Math.random()*W; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(245,240,255," + s.alpha + ")";
+      ctx.fill();
+    });
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+// ══════════════════════════════════════
+// STARFIELD — contenido principal
+// ══════════════════════════════════════
+function initStars() {
+  var canvas = document.getElementById("starfield");
+  var ctx = canvas.getContext("2d");
+  var W, H, stars = [], mouse = { x: -999, y: -999 };
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function makeStar() {
+    return { x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.4+0.3, alpha: Math.random()*0.6+0.1, speed: Math.random()*0.15+0.05, drift: (Math.random()-0.5)*0.08 };
+  }
+  resize();
+  for (var i = 0; i < 200; i++) stars.push(makeStar());
+  window.addEventListener("resize", resize);
+  window.addEventListener("mousemove", function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+  function tick() {
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(function(s) {
+      s.y -= s.speed; s.x += s.drift;
+      if (s.y < 0) { s.y = H; s.x = Math.random()*W; }
+      if (s.x < 0 || s.x > W) s.x = Math.random()*W;
+      var dx = s.x-mouse.x, dy = s.y-mouse.y;
+      var dist = Math.sqrt(dx*dx+dy*dy);
+      var glow = dist < 120 ? 1-dist/120 : 0;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r+glow*2, 0, Math.PI*2);
+      ctx.fillStyle = glow > 0
+        ? "rgba(232,160,191," + (s.alpha+glow*0.4) + ")"
+        : "rgba(245,240,255," + s.alpha + ")";
+      ctx.fill();
+    });
+    requestAnimationFrame(tick);
+  }
+  tick();
+  var track = document.getElementById("film-track");
+  track.innerHTML += track.innerHTML;
+}
+
+// ══════════════════════════════════════
+// SCROLL REVEAL con IntersectionObserver
+// ══════════════════════════════════════
+function initScrollReveal() {
+  var elements = document.querySelectorAll(".reveal");
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  elements.forEach(function(el) { observer.observe(el); });
+}
+
+// ══════════════════════════════════════
+// CONTADOR DE TIEMPO JUNTOS
+// ══════════════════════════════════════
+function initContador() {
+  // Fecha de inicio de la relación: 8 de junio de 2026
+  var inicio = new Date("2026-06-08T00:00:00");
+  function actualizar() {
+    var ahora = new Date();
+    var diff  = ahora - inicio;
+    if (diff < 0) diff = 0;
+    var segundosTotales = Math.floor(diff / 1000);
+    var minutosTotales  = Math.floor(segundosTotales / 60);
+    var horasTotales    = Math.floor(minutosTotales / 60);
+    var dias    = Math.floor(horasTotales / 24);
+    var horas   = horasTotales % 24;
+    var minutos = minutosTotales % 60;
+    var segundos = segundosTotales % 60;
+    document.getElementById("cnt-dias").textContent    = dias;
+    document.getElementById("cnt-horas").textContent   = horas;
+    document.getElementById("cnt-minutos").textContent = minutos;
+    document.getElementById("cnt-segundos").textContent = segundos;
+  }
+  actualizar();
+  setInterval(actualizar, 1000);
+}
+
+// ══════════════════════════════════════
+// POPUP
+// ══════════════════════════════════════
+function showPopup(emoji, mensaje) {
+  document.getElementById("msg-emoji").textContent = emoji;
+  document.getElementById("msg-text").textContent  = mensaje;
+  document.getElementById("msg-popup").classList.add("open");
+}
+
+function closePopup() {
+  document.getElementById("msg-popup").classList.remove("open");
+}
+
+function openMsg(el) {
+  showPopup(el.getAttribute("data-emoji"), el.getAttribute("data-msg"));
+}
+
+// ══════════════════════════════════════
+// ESTRELLAS DESBLOQUEABLES + EASTER EGG
+// ══════════════════════════════════════
+var estrellasDesbloqueadas = 0;
+var TOTAL_ESTRELLAS = 6;
+
+function unlockStar(el) {
+  var mensaje = el.getAttribute("data-star-msg");
+  if (!el.classList.contains("unlocked")) {
+    el.classList.add("unlocked");
+    el.textContent = "🌟";
+    estrellasDesbloqueadas++;
+    // Mostrar easter egg cuando se desbloquean todas
+    if (estrellasDesbloqueadas >= TOTAL_ESTRELLAS) {
+      setTimeout(function() {
+        var btn = document.getElementById("easter-egg-btn");
+        btn.style.display = "inline-block";
+      }, 600);
+    }
+    setTimeout(function() { showPopup("🌟", mensaje); }, 300);
+  } else {
+    showPopup("🌟", mensaje);
+  }
+}
+
+function openEasterEgg() {
+  showPopup("🔮", "encontraste el secreto más grande de esta página: yo te amo a ti, solo a ti, completamente. no hay easter egg más grande que ese.");
+}
+
+// ══════════════════════════════════════
+// MINI JUEGO
+// ══════════════════════════════════════
+var gameRunning = false;
+var gameHearts  = 0;
+var HEARTS_NEEDED = 8;
+
+function startGame() {
+  if (gameRunning) return;
+  gameRunning = true;
+  gameHearts  = 0;
+  document.getElementById("heart-count").textContent    = 0;
+  document.getElementById("carta-final").style.display  = "none";
+  document.getElementById("game-start-btn").textContent = "Jugando... ✨";
+
+  var wrap   = document.getElementById("game-canvas-wrap");
+  var canvas = document.getElementById("game-canvas");
+  canvas.width  = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+  var ctx = canvas.getContext("2d");
+  var W = canvas.width, H = canvas.height;
+
+  var player = { x: W/2, y: H-40, r: 10, targetX: W/2, targetY: H-40 };
+  var hearts = [], particles = [], spawnTimer = 0;
+
+  function spawnHeart() {
+    hearts.push({ x: Math.random()*(W-30)+15, y: -15, vy: Math.random()*1.2+0.6, r: 12, wobble: Math.random()*Math.PI*2 });
+  }
+
+  wrap.addEventListener("mousemove", function(e) {
+    var rect = wrap.getBoundingClientRect();
+    player.targetX = e.clientX - rect.left;
+    player.targetY = e.clientY - rect.top;
+  });
+  wrap.addEventListener("touchmove", function(e) {
+    e.preventDefault();
+    var rect = wrap.getBoundingClientRect();
+    player.targetX = e.touches[0].clientX - rect.left;
+    player.targetY = e.touches[0].clientY - rect.top;
+  }, { passive: false });
+
+  function drawHeart(cx, x, y, size, color) {
+    cx.save(); cx.translate(x, y); cx.fillStyle = color;
+    cx.beginPath();
+    cx.moveTo(0, -size*0.4);
+    cx.bezierCurveTo( size*0.9, -size*1.2,  size*1.6,  size*0.2,  0,  size);
+    cx.bezierCurveTo(-size*1.6,  size*0.2, -size*0.9, -size*1.2,  0, -size*0.4);
+    cx.fill(); cx.restore();
+  }
+
+  function gameLoop() {
+    if (!gameRunning) return;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "rgba(10,10,20,0.4)";
+    ctx.fillRect(0,0,W,H);
+
+    player.x += (player.targetX - player.x) * 0.12;
+    player.y += (player.targetY - player.y) * 0.12;
+
+    spawnTimer++;
+    if (spawnTimer % 55 === 0) spawnHeart();
+
+    hearts = hearts.filter(function(h) {
+      h.y += h.vy; h.wobble += 0.04; h.x += Math.sin(h.wobble)*0.5;
+      var dx = h.x-player.x, dy = h.y-player.y;
+      if (Math.sqrt(dx*dx+dy*dy) < player.r+h.r) {
+        gameHearts++;
+        document.getElementById("heart-count").textContent = gameHearts;
+        for (var i = 0; i < 8; i++) {
+          particles.push({ x: h.x, y: h.y, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3, life: 1 });
+        }
+        if (gameHearts >= HEARTS_NEEDED) {
+          gameRunning = false;
+          ctx.clearRect(0,0,W,H);
+          // Mostrar carta final
+          var carta = document.getElementById("carta-final");
+          carta.style.display = "block";
+          document.getElementById("game-start-btn").textContent = "Jugar de nuevo ✨";
+          return false;
+        }
+        return false;
+      }
+      if (h.y > H+20) return false;
+      drawHeart(ctx, h.x, h.y, h.r, "#e8a0bf");
+      return true;
+    });
+
+    particles = particles.filter(function(p) {
+      p.x += p.vx; p.y += p.vy; p.life -= 0.06;
+      if (p.life <= 0) return false;
+      ctx.globalAlpha = p.life;
+      drawHeart(ctx, p.x, p.y, 5, "#e8a0bf");
+      ctx.globalAlpha = 1;
+      return true;
+    });
+
+    ctx.font = (player.r*2) + "px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🌟", player.x, player.y);
+
+    ctx.fillStyle = "rgba(232,160,191,0.15)";
+    ctx.fillRect(0, H-4, (gameHearts/HEARTS_NEEDED)*W, 4);
+
+    requestAnimationFrame(gameLoop);
+  }
+  gameLoop();
+}
+
+// ══════════════════════════════════════
+// MÚSICA con fade
+// ══════════════════════════════════════
+var musicPlaying = false;
+
+function toggleMusic() {
+  var audio = document.getElementById("bg-music");
+  var btn   = document.getElementById("music-btn");
+  if (musicPlaying) {
+    fadeOutAudio(audio, 800, function() {
+      btn.textContent = "🎵";
+      musicPlaying = false;
+    });
+  } else {
+    audio.volume = 0;
+    audio.play().catch(function(){});
+    fadeInAudio(audio, 0, 1, 1500);
+    btn.textContent = "🔇";
+    musicPlaying = true;
+  }
+}
+</script>
+</body>
+</html>
